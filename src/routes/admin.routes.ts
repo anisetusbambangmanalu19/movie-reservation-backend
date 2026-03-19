@@ -22,6 +22,8 @@ const showtimeSchema = z.object({
   basePrice: z.number().int().positive(),
 });
 
+const showtimeUpdateSchema = showtimeSchema.partial();
+
 const auditoriumSchema = z.object({
   name: z.string().min(1),
   rows: z.array(z.object({ rowLabel: z.string().min(1), seatCount: z.number().int().positive() })).min(1),
@@ -30,6 +32,40 @@ const auditoriumSchema = z.object({
 export const adminRouter = Router();
 
 adminRouter.use(authRequired, requireRole("ADMIN"));
+
+adminRouter.get("/auditoriums", async (_req, res, next) => {
+  try {
+    const auditoriums = await prisma.auditorium.findMany({
+      include: {
+        seats: {
+          orderBy: [{ rowLabel: "asc" }, { seatNumber: "asc" }],
+        },
+      },
+      orderBy: { name: "asc" },
+    });
+    res.json(auditoriums);
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.get("/movies", async (_req, res, next) => {
+  try {
+    const movies = await prisma.movie.findMany({
+      include: {
+        genres: { include: { genre: true } },
+        showtimes: {
+          include: { auditorium: true },
+          orderBy: { startsAt: "asc" },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json(movies);
+  } catch (err) {
+    next(err);
+  }
+});
 
 adminRouter.post("/auditoriums", async (req, res, next) => {
   try {
@@ -184,6 +220,82 @@ adminRouter.post("/showtimes", async (req, res, next) => {
     });
 
     res.status(201).json(showtime);
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.get("/showtimes", async (_req, res, next) => {
+  try {
+    const showtimes = await prisma.showtime.findMany({
+      include: {
+        movie: true,
+        auditorium: true,
+      },
+      orderBy: { startsAt: "asc" },
+    });
+    res.json(showtimes);
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.put("/showtimes/:id", async (req, res, next) => {
+  try {
+    const id = z.string().uuid().parse(req.params.id);
+    const body = showtimeUpdateSchema.parse(req.body);
+
+    const current = await prisma.showtime.findUnique({ where: { id } });
+    if (!current) {
+      res.status(404).json({ message: "Showtime not found" });
+      return;
+    }
+
+    const nextStartsAt = body.startsAt ? new Date(body.startsAt) : current.startsAt;
+    const nextAuditoriumId = body.auditoriumId ?? current.auditoriumId;
+
+    const overlap = await prisma.showtime.findFirst({
+      where: {
+        id: { not: id },
+        auditoriumId: nextAuditoriumId,
+        startsAt: {
+          gte: new Date(nextStartsAt.getTime() - 3 * 60 * 60 * 1000),
+          lte: new Date(nextStartsAt.getTime() + 3 * 60 * 60 * 1000),
+        },
+      },
+    });
+
+    if (overlap) {
+      res.status(409).json({ message: "Potential showtime overlap in the same auditorium" });
+      return;
+    }
+
+    const updateData: Record<string, unknown> = {};
+    if (body.movieId !== undefined) updateData.movieId = body.movieId;
+    if (body.auditoriumId !== undefined) updateData.auditoriumId = body.auditoriumId;
+    if (body.startsAt !== undefined) updateData.startsAt = nextStartsAt;
+    if (body.basePrice !== undefined) updateData.basePrice = body.basePrice;
+
+    const showtime = await prisma.showtime.update({
+      where: { id },
+      data: updateData,
+      include: {
+        movie: true,
+        auditorium: true,
+      },
+    });
+
+    res.json(showtime);
+  } catch (err) {
+    next(err);
+  }
+});
+
+adminRouter.delete("/showtimes/:id", async (req, res, next) => {
+  try {
+    const id = z.string().uuid().parse(req.params.id);
+    await prisma.showtime.delete({ where: { id } });
+    res.status(204).send();
   } catch (err) {
     next(err);
   }

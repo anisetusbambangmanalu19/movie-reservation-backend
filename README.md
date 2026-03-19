@@ -88,6 +88,39 @@ npm run dev
 
 Server akan jalan di `http://localhost:3000`.
 
+## Akses Web UI
+
+UI sekarang tersedia langsung dari backend tanpa frontend terpisah.
+
+- Buka `http://localhost:3000`
+- Login admin menggunakan kredensial di `.env`:
+	- Email default: `admin@movie.local`
+	- Password default: `Admin12345`
+
+Fitur admin di halaman web:
+
+- CRUD film
+- Buat showtime
+- Lihat laporan reservasi dan revenue
+
 ## URL
+
 https://github.com/anisetusbambangmanalu19/movie-reservation-backend
 https://roadmap.sh/projects/movie-reservation-system
+
+## Publish ke GitHub (Repository Baru)
+
+1. Buat repo public baru di GitHub, misalnya: `movie-reservation-backend`
+2. Jalankan perintah berikut di folder project:
+
+```bash
+git add .
+git commit -m "feat: initial movie reservation backend"
+git branch -M main
+git remote add origin https://github.com/<username>/movie-reservation-backend.git
+git push -u origin main
+```
+
+3. Project page URL sekarang:
+
+- `https://github.com/anisetusbambangmanalu19/movie-reservation-backend`

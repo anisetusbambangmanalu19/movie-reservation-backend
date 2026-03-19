@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Movie Reservation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Sora:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="background-glow"></div>
+
+    <header class="topbar">
+      <div class="brand-wrap">
+        <p class="eyebrow">Movie Reservation System</p>
+        <h1>Cinema Reservation Workspace</h1>
+        <p class="subhead">Pilih film, pilih kursi, dan kelola studio dengan alur yang jelas.</p>
+      </div>
+      <div class="topbar-actions">
+        <span id="authStatus" class="auth-status">Belum login</span>
+        <button id="logoutBtn" class="btn ghost" hidden>Logout</button>
+      </div>
+    </header>
+
+    <section class="workflow-strip">
+      <div class="workflow-item"><span>1</span> Login / Register</div>
+      <div class="workflow-item"><span>2</span> Pilih Film & Jadwal</div>
+      <div class="workflow-item"><span>3</span> Pilih Kursi & Reservasi</div>
+      <div class="workflow-item"><span>4</span> Cek Reservasi</div>
+    </section>
+
+    <main class="grid-layout">
+      <section class="panel auth-panel section-user">
+        <h2>1) Akun</h2>
+        <div class="tab-row">
+          <button id="showLogin" class="tab active">Login</button>
+          <button id="showRegister" class="tab">Register</button>
+        </div>
+
+        <form id="loginForm" class="form-block">
+          <label>Email
+            <input type="email" name="email" required />
+          </label>
+          <label>Password
+            <input type="password" name="password" required />
+          </label>
+          <button type="submit" class="btn primary">Masuk</button>
+        </form>
+
+        <form id="registerForm" class="form-block" hidden>
+          <label>Nama Lengkap
+            <input type="text" name="fullName" required />
+          </label>
+          <label>Email
+            <input type="email" name="email" required />
+          </label>
+          <label>Password
+            <input type="password" name="password" minlength="8" required />
+          </label>
+          <button type="submit" class="btn primary">Daftar</button>
+        </form>
+      </section>
+
+      <section class="panel movie-panel section-user">
+        <div class="panel-head">
+          <h2>2) Film dan Jadwal</h2>
+          <label>Tanggal
+            <input id="dateFilter" type="date" />
+          </label>
+        </div>
+        <div id="movieList" class="movie-list"></div>
+      </section>
+
+      <section class="panel booking-panel section-user">
+        <h2>3) Reservasi Kursi</h2>
+        <p id="selectedShowtimeLabel" class="muted">Pilih jadwal tayang dulu dari daftar film.</p>
+        <div id="seatGrid" class="seat-grid"></div>
+        <button id="bookBtn" class="btn accent" disabled>Buat Reservasi</button>
+      </section>
+
+      <section class="panel reservation-panel section-user">
+        <div class="panel-head">
+          <h2>4) Reservasi Saya</h2>
+          <button id="refreshReservations" class="btn ghost">Refresh</button>
+        </div>
+        <div id="reservationList" class="reservation-list"></div>
+      </section>
+
+      <section id="adminPanel" class="panel admin-panel" hidden>
+        <div class="panel-head">
+          <h2>Admin Workspace</h2>
+          <button id="refreshAdminData" class="btn ghost">Refresh Admin Data</button>
+        </div>
+
+        <div class="admin-tabs" role="tablist" aria-label="Admin Menu">
+          <button class="admin-tab active" data-admin-tab="master">Data Master</button>
+          <button class="admin-tab" data-admin-tab="showtime">Manajemen Showtime</button>
+          <button class="admin-tab" data-admin-tab="report">Laporan</button>
+        </div>
+
+        <section class="admin-pane active" data-admin-pane="master">
+          <div class="admin-grid">
+            <article class="admin-card">
+              <h3>Buat Auditorium</h3>
+              <p class="helper">Isi jumlah baris dan kursi. Sistem akan otomatis membuat kode kursi A1, A2, dst.</p>
+              <form id="createAuditoriumForm" class="form-block">
+                <label>Nama Auditorium
+                  <input type="text" name="name" required />
+                </label>
+                <label>Jumlah Baris
+                  <input type="number" name="rowCount" min="1" max="26" required />
+                </label>
+                <label>Kursi per Baris
+                  <input type="number" name="seatsPerRow" min="1" max="50" required />
+                </label>
+                <button type="submit" class="btn primary">Simpan Auditorium</button>
+              </form>
+            </article>
+
+            <article class="admin-card">
+              <h3>Tambah Film</h3>
+              <form id="createMovieForm" class="form-block">
+                <label>Judul
+                  <input type="text" name="title" required />
+                </label>
+                <label>Deskripsi
+                  <input type="text" name="description" required />
+                </label>
+                <label>Poster URL
+                  <input type="url" name="posterUrl" required />
+                </label>
+                <label>Durasi (menit)
+                  <input type="number" name="durationMin" min="1" required />
+                </label>
+                <label>Genre (pisahkan koma)
+                  <input type="text" name="genres" placeholder="Action, Drama" required />
+                </label>
+                <button type="submit" class="btn primary">Simpan Film</button>
+              </form>
+            </article>
+
+            <article class="admin-card">
+              <h3>Update Film</h3>
+              <form id="updateMovieForm" class="form-block">
+                <label>Pilih Film
+                  <select id="editMovieId" name="id" required></select>
+                </label>
+                <label>Judul Baru
+                  <input type="text" name="title" />
+                </label>
+                <label>Deskripsi Baru
+                  <input type="text" name="description" />
+                </label>
+                <label>Poster URL Baru
+                  <input type="url" name="posterUrl" />
+                </label>
+                <label>Durasi Baru (menit)
+                  <input type="number" name="durationMin" min="1" />
+                </label>
+                <label>Genre Baru (pisahkan koma)
+                  <input type="text" name="genres" placeholder="Kosongkan jika tidak diubah" />
+                </label>
+                <button type="submit" class="btn primary">Update Film</button>
+              </form>
+            </article>
+
+            <article class="admin-card">
+              <h3>Hapus Film</h3>
+              <form id="deleteMovieForm" class="form-block">
+                <label>Pilih Film
+                  <select id="deleteMovieId" name="id" required></select>
+                </label>
+                <button type="submit" class="btn danger">Hapus Film</button>
+              </form>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-pane" data-admin-pane="showtime">
+          <div class="admin-grid admin-grid-showtime">
+            <article class="admin-card">
+              <h3>Buat Showtime</h3>
+              <form id="createShowtimeForm" class="form-block">
+                <label>Film
+                  <select id="showtimeMovieId" name="movieId" required></select>
+                </label>
+                <label>Auditorium
+                  <select id="showtimeAuditoriumId" name="auditoriumId" required></select>
+                </label>
+                <label>Mulai Tayang
+                  <input type="datetime-local" name="startsAt" required />
+                </label>
+                <label>Harga Dasar
+                  <input type="number" name="basePrice" min="1" required />
+                </label>
+                <button type="submit" class="btn accent">Buat Showtime</button>
+              </form>
+            </article>
+
+            <article class="admin-card admin-card-wide">
+              <div class="panel-head">
+                <h3>Daftar Showtime</h3>
+                <button id="refreshShowtimeTableBtn" class="btn ghost">Refresh Showtime</button>
+              </div>
+              <div class="showtime-table-wrap">
+                <table class="showtime-table">
+                  <thead>
+                    <tr>
+                      <th>Film</th>
+                      <th>Auditorium</th>
+                      <th>Mulai</th>
+                      <th>Harga</th>
+                      <th>Aksi</th>
+                    </tr>
+                  </thead>
+                  <tbody id="showtimeTableBody">
+                    <tr>
+                      <td colspan="5" class="muted">Belum ada showtime.</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="admin-pane" data-admin-pane="report">
+          <div class="admin-report-wrap no-border">
+            <div class="panel-head">
+              <h3>Laporan Reservasi</h3>
+              <button id="loadReportBtn" class="btn ghost">Muat Laporan</button>
+            </div>
+            <div id="reportSummary" class="report-summary muted">Belum ada data laporan.</div>
+            <div id="reportList" class="report-list"></div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" hidden></div>
+    <script src="/app.js"></script>
+  </body>
+</html>
