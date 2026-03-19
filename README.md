@@ -87,3 +87,6 @@ npm run dev
 ```
 
 Server akan jalan di `http://localhost:3000`.
+
+## URL
+https://github.com/anisetusbambangmanalu19/movie-reservation-backend
