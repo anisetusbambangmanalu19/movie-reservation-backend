@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum ReservationStatus {
+  ACTIVE
+  CANCELLED
+}
+
+model User {
+  id             String        @id @default(uuid())
+  email          String        @unique
+  fullName       String
+  passwordHash   String
+  role           UserRole      @default(USER)
+  reservations   Reservation[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model Genre {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  movies    MovieGenre[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+}
+
+model Movie {
+  id          String       @id @default(uuid())
+  title       String
+  description String
+  posterUrl   String
+  durationMin Int
+  genres      MovieGenre[]
+  showtimes   Showtime[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model MovieGenre {
+  movieId String
+  genreId String
+  movie   Movie @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  genre   Genre @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([movieId, genreId])
+}
+
+model Auditorium {
+  id        String      @id @default(uuid())
+  name      String      @unique
+  capacity  Int
+  seats     Seat[]
+  showtimes Showtime[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+model Seat {
+  id           String        @id @default(uuid())
+  auditoriumId String
+  rowLabel     String
+  seatNumber   Int
+  code         String
+  auditorium   Auditorium    @relation(fields: [auditoriumId], references: [id], onDelete: Cascade)
+  reserved     ReservedSeat[]
+
+  @@unique([auditoriumId, rowLabel, seatNumber])
+  @@unique([auditoriumId, code])
+}
+
+model Showtime {
+  id           String         @id @default(uuid())
+  movieId       String
+  auditoriumId  String
+  startsAt      DateTime
+  basePrice     Int
+  movie         Movie         @relation(fields: [movieId], references: [id], onDelete: Cascade)
+  auditorium    Auditorium    @relation(fields: [auditoriumId], references: [id], onDelete: Restrict)
+  reservations  Reservation[]
+  reservedSeats ReservedSeat[]
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@index([startsAt])
+}
+
+model Reservation {
+  id           String            @id @default(uuid())
+  userId       String
+  showtimeId   String
+  status       ReservationStatus @default(ACTIVE)
+  totalPrice   Int
+  reservedSeat ReservedSeat[]
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  showtime     Showtime          @relation(fields: [showtimeId], references: [id], onDelete: Restrict)
+  createdAt    DateTime          @default(now())
+  cancelledAt  DateTime?
+  updatedAt    DateTime          @updatedAt
+
+  @@index([userId])
+  @@index([showtimeId])
+}
+
+model ReservedSeat {
+  id            String      @id @default(uuid())
+  reservationId String
+  showtimeId    String
+  seatId        String
+  reservation   Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  showtime      Showtime    @relation(fields: [showtimeId], references: [id], onDelete: Cascade)
+  seat          Seat        @relation(fields: [seatId], references: [id], onDelete: Restrict)
+
+  @@unique([showtimeId, seatId])
+  @@index([reservationId])
+}
