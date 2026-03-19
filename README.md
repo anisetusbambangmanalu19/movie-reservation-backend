@@ -103,4 +103,4 @@ git push -u origin main
 
 3. Tambahkan URL repo ke bagian ini setelah upload:
 
-- Project page URL: `https://github.com/<username>/movie-reservation-backend`
+- Project page URL: `https://github.com/anisetusbambangmanalu19/movie-reservation-backend`
