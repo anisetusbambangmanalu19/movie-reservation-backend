@@ -87,20 +87,3 @@ npm run dev
 ```
 
 Server akan jalan di `http://localhost:3000`.
-
-## Publish ke GitHub (Repository Baru)
-
-1. Buat repo public baru di GitHub, misalnya: `movie-reservation-backend`
-2. Jalankan perintah berikut di folder project:
-
-```bash
-git add .
-git commit -m "feat: initial movie reservation backend"
-git branch -M main
-git remote add origin https://github.com/<username>/movie-reservation-backend.git
-git push -u origin main
-```
-
-3. Tambahkan URL repo ke bagian ini setelah upload:
-
-- Project page URL: `https://github.com/anisetusbambangmanalu19/movie-reservation-backend`
